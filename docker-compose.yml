@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bus_booking
+      POSTGRES_USER: bus
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bus -d bus_booking"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+ 
+  app:
+    build: .
+    image: bus-booking:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: bus_booking
+      DB_USER: bus
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    ports:
+      - "8000:8000"   # temporary, removed in Lesson 7
+    networks: [backend]
+ 
+networks:
+  backend: {}
+ 
+volumes:
+  pgdata:
+ 
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
