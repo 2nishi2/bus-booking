@@ -1,0 +1,48 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\DELL\projects\bus-booking\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\DELL\projects\bus-booking
+configfile: pytest.ini
+testpaths: tests
+collecting ... collected 38 items
+
+tests/test_api.py::test_health PASSED                                    [  2%]
+tests/test_api.py::test_ready PASSED                                     [  5%]
+tests/test_api.py::test_routes_list PASSED                               [  7%]
+tests/test_api.py::test_route_has_ordered_stops PASSED                   [ 10%]
+tests/test_api.py::test_unknown_route_is_404 PASSED                      [ 13%]
+tests/test_api.py::test_trips_can_be_filtered_by_date PASSED             [ 15%]
+tests/test_api.py::test_seat_map_starts_all_available PASSED             [ 18%]
+tests/test_api.py::test_seat_map_unknown_trip_is_404 PASSED              [ 21%]
+tests/test_api.py::test_seat_map_shows_booked_seat PASSED                [ 23%]
+tests/test_api.py::test_valid_booking_returns_ticket PASSED              [ 26%]
+tests/test_api.py::test_partial_journey_fare PASSED                      [ 28%]
+tests/test_api.py::test_get_booking_by_pnr PASSED                        [ 31%]
+tests/test_api.py::test_get_booking_accepts_lowercase_pnr PASSED         [ 34%]
+tests/test_api.py::test_unknown_pnr_is_404 PASSED                        [ 36%]
+tests/test_api.py::test_invalid_input_gives_422[overrides0] PASSED       [ 39%]
+tests/test_api.py::test_invalid_input_gives_422[overrides1] PASSED       [ 42%]
+tests/test_api.py::test_invalid_input_gives_422[overrides2] PASSED       [ 44%]
+tests/test_api.py::test_invalid_input_gives_422[overrides3] PASSED       [ 47%]
+tests/test_api.py::test_invalid_input_gives_422[overrides4] PASSED       [ 50%]
+tests/test_api.py::test_invalid_input_gives_422[overrides5] PASSED       [ 52%]
+tests/test_api.py::test_invalid_input_gives_422[overrides6] PASSED       [ 55%]
+tests/test_api.py::test_invalid_input_gives_422[overrides7] PASSED       [ 57%]
+tests/test_api.py::test_invalid_input_gives_422[overrides8] PASSED       [ 60%]
+tests/test_api.py::test_invalid_input_gives_422[overrides9] PASSED       [ 63%]
+tests/test_api.py::test_invalid_input_gives_422[overrides10] PASSED      [ 65%]
+tests/test_api.py::test_past_date_is_rejected PASSED                     [ 68%]
+tests/test_api.py::test_date_must_match_the_trip PASSED                  [ 71%]
+tests/test_api.py::test_missing_passenger_is_rejected PASSED             [ 73%]
+tests/test_api.py::test_non_json_body_is_rejected PASSED                 [ 76%]
+tests/test_api.py::test_unknown_trip_is_404 PASSED                       [ 78%]
+tests/test_api.py::test_unknown_seat_is_404 PASSED                       [ 81%]
+tests/test_api.py::test_same_seat_twice_gives_409 PASSED                 [ 84%]
+tests/test_api.py::test_same_seat_on_another_trip_is_allowed PASSED      [ 86%]
+tests/test_api.py::test_cancel_booking PASSED                            [ 89%]
+tests/test_api.py::test_cancel_twice_gives_409 PASSED                    [ 92%]
+tests/test_api.py::test_cancel_unknown_pnr_is_404 PASSED                 [ 94%]
+tests/test_api.py::test_cancelled_seat_can_be_booked_again PASSED        [ 97%]
+tests/test_api.py::test_concurrent_requests_only_one_wins PASSED         [100%]
+
+============================= 38 passed in 8.86s ==============================
