@@ -1,0 +1,55 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261115232150
+Username: NISHITHA\DELL
+RunAs User: NISHITHA\DELL
+Configuration Name: 
+Machine: NISHITHA (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 11144
+PSVersion: 5.1.22621.6133
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6133
+BuildVersion: 10.0.22621.6133
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is evidence\rollback_drill.log
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) .\scripts\deploy.ps1 1.0.1
+Deploying 1.0.1 (previous good: 1.0.0)
+
+Deploy of 1.0.1 succeeded
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) .\scripts\deploy.ps1 1.0.2
+Deploying 1.0.2 (previous good: 1.0.1)
+
+Deploy of 1.0.2 FAILED
+
+Rolling back to 1.0.1
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) curl.exe -k -s https://localhost:8443/health
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Get-Content deploy\history.log
+2026-11-15T20:19:15 1.0.0 OK
+2026-11-15T20:20:42 1.0.1 OK
+2026-11-15T20:21:50 1.0.2 FAILED
+2026-11-15T20:21:56 1.0.1 OK (rollback)
+2026-11-15T22:54:03 1.0.0 OK
+2026-11-15T22:55:22 1.0.1 FAILED
+2026-11-15T22:56:45 1.0.0 OK (rollback)
+2026-11-15T23:05:28 1.0.0 FAILED
+2026-11-15T23:12:07 1.0.0 FAILED
+2026-11-15T23:23:16 1.0.1 OK
+2026-11-15T23:24:32 1.0.2 FAILED
+2026-11-15T23:26:50 1.0.1 OK (rollback)
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20261115232756
+**********************

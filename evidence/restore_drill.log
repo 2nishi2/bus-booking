@@ -1,0 +1,116 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261115223725
+Username: NISHITHA\DELL
+RunAs User: NISHITHA\DELL
+Configuration Name: 
+Machine: NISHITHA (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 11144
+PSVersion: 5.1.22621.6133
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6133
+BuildVersion: 10.0.22621.6133
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is evidence\restore_drill.log
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Get-Content scripts\backup.ps1
+Set-Location (Split-Path $PSScriptRoot -Parent)
+New-Item -ItemType Directory -Force backups | Out-Null
+
+$stamp = Get-Date -Format "yyyyMMddTHHmmss"
+$file = "backups\bus_booking_$stamp.dump"
+
+docker compose exec -T db sh -c "pg_dump -U bus -d bus_booking -Fc -f /tmp/backup.dump"
+docker compose cp db:/tmp/backup.dump $file
+
+if (-not (Test-Path $file) -or (Get-Item $file).Length -eq 0) {
+  Write-Host "Backup FAILED"
+  exit 1
+}
+
+$h = (Get-FileHash $file -Algorithm SHA256).Hash
+Set-Content -Path "$file.sha256.txt" -Value "$h  $(Split-Path $file -Leaf)" -Encoding ascii
+
+# Retention: keep only the 7 newest backups
+Get-ChildItem backups\*.dump | Sort-Object LastWriteTime -Descending | Select-Object -Skip 7 | Remove-Item
+
+Write-Host "Backup OK: $file"
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $trips = curl.exe -k -s "https://localhost:8443/api/v1/trips?route_id=1" | ConvertFrom-Json
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $trip = $trips.trips[0]
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $seats = curl.exe -k -s "https://localhost:8443/api/v1/trips/$($trip.id)/seats" | ConvertFrom-Json
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $seat = ($seats.seats | Where-Object { $_.status -eq "AVAILABLE" } | Select-Object -Last 1).seat_no
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $body = @{
+  trip_id = $trip.id; seat_no = $seat; travel_date = $trip.departure_date
+  boarding_stop_id = 1; drop_stop_id = 5
+  passenger = @{ name = "Asha Verma"; age = 29; phone = "9876543210" }
+} | ConvertTo-Json -Depth 3 -Compress
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Set-Content -Path booking.json -Value $body -Encoding ascii
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $resp = curl.exe -k -s -X POST https://localhost:8443/api/v1/bookings -H "Content-Type: application/json" --data "@booking.json" | ConvertFrom-Json
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $pnr = $resp.pnr
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Write-Host "PNR = $pnr (seat $seat)"
+PNR = BBJNQMP76V (seat 5C)
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) .\scripts\backup.ps1
+
+
+Backup OK: backups\bus_booking_20261115T224110.dump
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $dump = Get-ChildItem backups\*.dump | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose exec -T db psql -U bus -d bus_booking -c "DELETE FROM bookings;"
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) curl.exe -k -s -w " HTTP %{http_code}`n" "https://localhost:8443/api/v1/bookings/$pnr"
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $expected = (Select-String -Path "$($dump.FullName).sha256.txt" -Pattern '[A-Fa-f0-9]{64}' | Select-Object -First 1).Matches.Value
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) $actual = (Get-FileHash $dump.FullName -Algorithm SHA256).Hash
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Write-Host "expected=$expected"
+expected=F78C31DA65885A7B5C46AE564CA65CF68E1AD77F08AE0456F5432306DD6BE712
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Write-Host "actual  =$actual"
+actual  =F78C31DA65885A7B5C46AE564CA65CF68E1AD77F08AE0456F5432306DD6BE712
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) if ($expected -ne $actual) { throw "CHECKSUM MISMATCH" }
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Write-Host "Checksum OK"
+Checksum OK
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose stop app
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose cp "backups\$($dump.Name)" db:/tmp/restore.dump
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose exec -T db sh -c "pg_restore -U bus -d bus_booking --clean --if-exists --no-owner --single-transaction /tmp/restore.dump"
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose start app
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) for ($i = 0; $i -lt 20; $i++) { $c = curl.exe -k -s -o NUL -w "%{http_code}" https://localhost:8443/ready; if ($c -eq "200") { break }; Start-Sleep -Seconds 3 }
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) curl.exe -k -s -w " HTTP %{http_code}`n" "https://localhost:8443/api/v1/bookings/$pnr"
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20261115224619
+**********************
