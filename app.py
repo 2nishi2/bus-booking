@@ -1,14 +1,37 @@
+import json
+import logging
 import os
 import re
 import secrets
+import sys
+import time
+import uuid
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import psycopg
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 from psycopg.rows import dict_row
 
 app = Flask(__name__)
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        data = {
+            "ts": datetime.fromtimestamp(record.created, UTC).isoformat(),
+            "level": record.levelname,
+            "msg": record.getMessage(),
+        }
+        data.update(getattr(record, "fields", {}))
+        return json.dumps(data)
+
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(JsonFormatter())
+log = logging.getLogger("bus")
+log.setLevel(logging.INFO)
+log.addHandler(handler)
 
 ROUTES = [
     (
@@ -286,14 +309,56 @@ def create_booking():
                     (trip["id"], clean["seat_no"]),
                 )
                 if taken:
+                    log.warning(
+                        "seat conflict",
+                        extra={
+                            "fields": {
+                                "request_id": g.request_id,
+                                "seat_no": clean["seat_no"],
+                            }
+                        },
+                    )
                     return jsonify(
                         error="seat_unavailable",
                         message="this seat is already booked for the trip",
                     ), 409
                 continue  # the PNR itself collided (very rare): try a new one
+            log.info(
+                "booking created",
+                extra={"fields": {"request_id": g.request_id, "pnr": pnr}},
+            )
             booking = query_one(conn, "SELECT * FROM bookings WHERE pnr = %s", (pnr,))
             return jsonify(booking), 201
         return jsonify(error="pnr_generation_failed"), 500
+
+
+@app.before_request
+def start_timer():
+    g.t0 = time.perf_counter()
+    g.request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:16]
+
+
+@app.after_request
+def log_request(response):
+    request_id = g.get("request_id", "-")
+    response.headers["X-Request-ID"] = request_id
+    if request.path != "/health":  # keep health probes out of the logs
+        duration = round(
+            (time.perf_counter() - g.get("t0", time.perf_counter())) * 1000, 2
+        )
+        log.info(
+            "request",
+            extra={
+                "fields": {
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.path,
+                    "status": response.status_code,
+                    "duration_ms": duration,
+                }
+            },
+        )
+    return response
 
 
 @app.get("/health")
