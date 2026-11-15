@@ -7,6 +7,8 @@ COPY app.py .
 COPY schema.sql .
 COPY initdb.py .
 RUN useradd --system --uid 10001 --create-home appuser
+ARG APP_VERSION=local
+ENV APP_VERSION=${APP_VERSION}
 ENV HOME=/tmp
 USER 10001
 EXPOSE 8000

@@ -18,8 +18,11 @@ services:
       start_period: 10s
 
   app:
-    build: .
-    image: bus-booking:local
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-local}
+    image: ${IMAGE_REPO:-bus-booking}:${APP_VERSION:-local}
     restart: unless-stopped
     depends_on:
       db:

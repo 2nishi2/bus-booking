@@ -299,7 +299,7 @@ def create_booking():
 @app.get("/health")
 def health():
     # Liveness: is the program itself alive? Never touches the database.
-    return jsonify(status="ok")
+    return jsonify(status="ok", version=os.environ.get("APP_VERSION", "dev"))
 
 
 @app.get("/ready")
