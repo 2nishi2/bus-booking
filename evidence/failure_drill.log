@@ -1,0 +1,45 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261115214456
+Username: NISHITHA\DELL
+RunAs User: NISHITHA\DELL
+Configuration Name: 
+Machine: NISHITHA (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 11144
+PSVersion: 5.1.22621.6133
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6133
+BuildVersion: 10.0.22621.6133
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is evidence\failure_drill.log
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose ps -a
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker inspect -f "{{.RestartCount}} {{.State.StartedAt}}" (docker compose ps -q app)
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose exec app sh -c "kill -TERM 1"
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Start-Sleep -Seconds 20
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker inspect -f "{{.RestartCount}} {{.State.StartedAt}}" (docker compose ps -q app)
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) docker compose ps -a
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) curl.exe -k -s -w " HTTP %{http_code}`n" https://localhost:8443/ready
+
+PS C:\Users\DELL\projects\bus-booking>
+(.venv) Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20261115214815
+**********************
