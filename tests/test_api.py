@@ -6,6 +6,7 @@ import pytest
 from app import app as flask_app
 from app import get_conn
 
+
 # Helpers
 def post_booking(client, body):
     return client.post("/api/v1/bookings", json=body)
@@ -23,6 +24,7 @@ def confirmed_count(trip_id, seat_no):
 
 # Health and readiness
 
+
 def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
@@ -34,7 +36,9 @@ def test_ready(client):
     assert response.status_code == 200
     assert response.get_json()["status"] == "ready"
 
+
 # Routes, trips and the seat map
+
 
 def test_routes_list(client):
     response = client.get("/api/v1/routes")
@@ -77,7 +81,9 @@ def test_seat_map_shows_booked_seat(client, trip, make_payload):
     booked = [s["seat_no"] for s in body["seats"] if s["status"] == "BOOKED"]
     assert booked == ["2C"]
 
+
 # Creating and reading bookings
+
 
 def test_valid_booking_returns_ticket(client, make_payload):
     response = post_booking(client, make_payload("2B"))
@@ -113,7 +119,9 @@ def test_get_booking_accepts_lowercase_pnr(client, make_payload):
 def test_unknown_pnr_is_404(client):
     assert client.get("/api/v1/bookings/BBNOPE0000").status_code == 404
 
+
 # Validation: bad input must give 422
+
 
 @pytest.mark.parametrize(
     "overrides",
@@ -144,7 +152,9 @@ def test_past_date_is_rejected(client, make_payload):
 
 
 def test_date_must_match_the_trip(client, trip, make_payload):
-    next_day = (date.fromisoformat(trip["departure_date"]) + timedelta(days=1)).isoformat()
+    next_day = (
+        date.fromisoformat(trip["departure_date"]) + timedelta(days=1)
+    ).isoformat()
     response = post_booking(client, make_payload(travel_date=next_day))
     assert response.status_code == 422
 
@@ -167,7 +177,9 @@ def test_unknown_trip_is_404(client, make_payload):
 def test_unknown_seat_is_404(client, make_payload):
     assert post_booking(client, make_payload("9Z")).status_code == 404
 
+
 # The core rule: one confirmed booking per seat
+
 
 def test_same_seat_twice_gives_409(client, trip, make_payload):
     first = post_booking(client, make_payload("1A"))
@@ -188,7 +200,9 @@ def test_same_seat_on_another_trip_is_allowed(client, make_payload):
     assert post_booking(client, make_payload("1A")).status_code == 201
     assert post_booking(client, on_other_trip).status_code == 201
 
+
 # Cancellation
+
 
 def test_cancel_booking(client, make_payload):
     pnr = post_booking(client, make_payload("1B")).get_json()["pnr"]
@@ -219,7 +233,9 @@ def test_cancelled_seat_can_be_booked_again(client, trip, make_payload):
     assert again.get_json()["pnr"] != first_pnr  # a brand new PNR
     assert confirmed_count(trip["id"], "1D") == 1
 
+
 # Concurrency: 20 requests at the same instant, one seat
+
 
 def test_concurrent_requests_only_one_wins(trip, make_payload):
     results = []
