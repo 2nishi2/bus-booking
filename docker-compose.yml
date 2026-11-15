@@ -16,7 +16,7 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
- 
+
   app:
     build: .
     image: bus-booking:local
@@ -30,16 +30,39 @@ services:
       DB_USER: bus
       DB_PASSWORD_FILE: /run/secrets/db_password
     secrets: [db_password]
+    networks: [frontend, backend]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: localhost
     ports:
-      - "8000:8000"   # temporary, removed in Lesson 7
-    networks: [backend]
- 
+      - "8081:80"
+      - "8443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend]
+
 networks:
-  backend: {}
- 
+  frontend: {}
+  backend:
+    internal: true
+
 volumes:
   pgdata:
- 
+  caddy_data:
+  caddy_config:
+
 secrets:
   db_password:
     file: ./secrets/db_password.txt

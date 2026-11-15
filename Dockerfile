@@ -7,6 +7,7 @@ COPY app.py .
 COPY schema.sql .
 COPY initdb.py .
 RUN useradd --system --uid 10001 --create-home appuser
+ENV HOME=/tmp
 USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
