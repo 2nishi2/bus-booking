@@ -34,7 +34,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/bus_test
       
-    build:
+  build:
     needs: [test]
     runs-on: ubuntu-latest
     permissions:
